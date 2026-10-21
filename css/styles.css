@@ -52,8 +52,8 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .pitch-head h2{font-family:var(--display);font-size:24px;text-transform:uppercase}
 .media{font-family:var(--mono);font-size:13px;color:var(--muted)}
 .media strong{font-family:var(--display);font-weight:400;font-size:28px;color:var(--granate);margin-left:6px}
-.pitch{position:relative;background:var(--field);border:1.5px solid var(--ink);border-radius:2px;aspect-ratio:68/80;max-width:100%;
-  display:grid;grid-template-rows:repeat(4,1fr);padding:4% 2%}
+.pitch{position:relative;background:var(--field);border:1.5px solid var(--ink);border-radius:2px;min-height:560px;max-width:100%;
+  display:grid;grid-auto-rows:minmax(92px,1fr);padding:16px 6px}
 .pitch svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .pitch svg *{fill:none;stroke:var(--line);stroke-width:1.4}
 .row{position:relative;display:flex;justify-content:space-around;align-items:center}
@@ -63,7 +63,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .slot.filled .disc{border:0;background:var(--granate);color:#fff;font-family:var(--display);font-size:20px;font-weight:400}
 .slot.filled.top .disc{box-shadow:0 0 0 3px var(--gold)}
 .slot.hint .disc{border-color:var(--granate);border-style:solid;color:var(--granate);transform:scale(1.08)}
-.slot .nm{font-size:12px;font-weight:700;line-height:1.15;min-height:2.3em;overflow-wrap:anywhere}
+.slot .nm{font-size:12px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}
 .slot .yr{font-family:var(--mono);font-size:11px;color:var(--muted)}
 .slot .pen{color:var(--warn)}
 .bench{display:flex;align-items:center;gap:12px;border-top:1.5px dashed var(--line);padding-top:12px}
@@ -136,4 +136,27 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .match .pk{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .match ul{margin:0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
 .sim-actions{display:flex;flex-wrap:wrap;gap:10px}
+
+/* formaciones */
+.formations{display:flex;flex-wrap:wrap;gap:6px}
+.fm{font-family:var(--mono);font-size:13px;font-weight:600;background:transparent;border:1.5px solid var(--line);border-radius:4px;padding:6px 10px}
+.fm:hover{border-color:var(--ink)}
+.fm.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+/* copa */
+.bracket{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;counter-reset:none}
+@media (max-width:900px){.bracket{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+.tie{border:1.5px solid var(--line);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:6px;position:relative;animation:in .35s both;background:var(--card)}
+.tie.won{border-color:var(--ok)}
+.tie.lost{border-color:var(--warn)}
+.tie.next{border-color:var(--granate);box-shadow:0 0 0 2px var(--granate-soft)}
+.tie.locked{opacity:.45}
+.tie .rd{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.tie.won .rd{color:var(--ok)} .tie.lost .rd{color:var(--warn)} .tie.next .rd{color:var(--granate)}
+.tie .sc{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tie .team{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.tie .team em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tie .sc strong{font-family:var(--display);font-size:26px;font-weight:400;font-variant-numeric:tabular-nums;line-height:1}
+.tie .pk{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tie ul{margin:0;padding:6px 0 0;border-top:1px dashed var(--line);list-style:none;font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
