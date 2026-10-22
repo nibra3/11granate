@@ -78,6 +78,12 @@ const CUP_MODES = {
 
 let S;
 const MAX_USES = 2;
+/* Camisetas por temporada: img/camisetas/AÑO.png (si falta alguna, no se muestra nada) */
+const KITS = window.KITS || {};
+const HAS_KIT = window.KITS ? (y=>!!KITS[y]) : (y=>true);
+const kitSrc = y => KITS[y] || `img/camisetas/${y}.png`;
+const kitImg = (y,cls='kit') => HAS_KIT(y) ? `<img class="${cls}" src="${kitSrc(y)}" alt="Camiseta ${y}" onerror="this.remove()">` : '';
+function showKit(el,y){ if(!y||!HAS_KIT(y)){ el.hidden=true; el.removeAttribute('src'); return; } el.onerror=()=>{el.hidden=true}; el.src=kitSrc(y); el.alt='Camiseta '+y; el.hidden=false; }
 function fresh(f){return {formation:f||'4-3-3',picks:{},uses:{},rerolls:REROLLS,season:null,open:null,cup:null,msg:null}}
 const usesOf = y => (S.uses||{})[y]||0;
 
@@ -216,7 +222,7 @@ function renderDice(){
   const yr=$('yr'), btn=$('roll'), note=$('note');
   note.classList.remove('alert');
   if(complete()){
-    yr.textContent='LISTO'; yr.classList.remove('idle'); $('dtline').textContent='Tu equipo está completo';
+    yr.textContent='LISTO'; yr.classList.remove('idle'); showKit($('yrKit'),null); $('dtline').textContent='Tu equipo está completo';
     $('rollTxt').textContent = S.cup ? 'Ver la copa' : 'Ir a la copa'; btn.disabled=false;
     note.textContent= S.msg || 'Copa de eliminación directa desde 16avos contra rivales históricos de Lanús.';
     note.classList.toggle('alert',!!S.msg);
@@ -224,12 +230,12 @@ function renderDice(){
   }
   if(S.msg){ note.textContent=S.msg; note.classList.add('alert'); }
   if(!S.season){
-    yr.textContent='????'; yr.classList.add('idle'); $('dtline').textContent='Tirá el dado para sortear un plantel';
+    yr.textContent='????'; yr.classList.add('idle'); showKit($('yrKit'),null); $('dtline').textContent='Tirá el dado para sortear un plantel';
     $('rollTxt').textContent='Tirar'; btn.disabled=false;
     if(!S.msg) note.textContent='Cada tirada te da un plantel. Elegís un solo jugador (o el DT) y volvés a tirar. Cada plantel se puede usar hasta 2 veces.';
     return;
   }
-  yr.textContent=S.season; yr.classList.remove('idle');
+  yr.textContent=S.season; yr.classList.remove('idle'); showKit($('yrKit'),S.season);
   $('dtline').innerHTML='DT: '+DATA[S.season].dt.map(d=>d.n).join(' / ')+(usesOf(S.season)?` · <span class="uses">Última vez que podés usar este plantel</span>`:'');
   if(!seasonPlayable(S.season)){
     $('rollTxt').textContent='Tirar gratis'; btn.disabled=false;
@@ -243,7 +249,7 @@ function renderSquad(){
   const box=$('squad');
   $('squadHint').hidden=true;
   if(!S.season){ $('sqTitle').textContent='Plantel'; box.innerHTML=`<p class="empty">${complete()?'Equipo completo. Ahora jugá la copa.':'Todavía no salió ninguna temporada.'}</p>`; return; }
-  $('sqTitle').textContent='Plantel '+S.season;
+  $('sqTitle').innerHTML='Plantel '+S.season+kitImg(S.season,'kit kit-sm');
   const prevScroll = box.querySelector('.squad-list')?.scrollTop ?? 0;
   const list=seasonPlayers(S.season).map(p=>({p,st:status(p)}));
   let html='';
@@ -346,7 +352,7 @@ function renderCup(){
     return `<li class="tie ${state}">
       <span class="rd">${r.rd}</span>
       <div class="sc"><span class="team">${mode==='lanus'?'Tu 11':'Lanús'}</span><strong>${m?m.us:''}</strong></div>
-      <div class="sc"><span class="team">${shown?`${t.n} <em>${t.y}</em>`:'—'}</span><strong>${m?m.them:''}</strong></div>
+      <div class="sc"><span class="team">${shown?`${t.n} <em>${t.y}</em>${String(S.cup.rivals[i]).startsWith('lan')?kitImg(t.y,'kit kit-xs'):''}`:'—'}</span><strong>${m?m.them:''}</strong></div>
       <span class="pk">${m&&m.pens?`Penales ${m.pens[0]}–${m.pens[1]}`:shown?t.c:''}</span>
       ${m?`<ul>${m.goals.map(g=>`<li>${g.m}' ${last(g.p.n)}</li>`).join('')||'<li>Sin goles tuyos</li>'}</ul>`:''}
     </li>`;}).join('')}</ol>
