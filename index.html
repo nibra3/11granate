@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>El Once Granate</title>
+<title>11 Granate</title>
+<link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -13,8 +14,8 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>El Once <span>Granate</span></h1>
-      <p>Armá tu equipo ideal con jugadores de los planteles de Lanús de 2015 a 2026. Elegí formación, tenés 150 millones de euros para 11 jugadores y un DT, y salí a ganar la copa.</p>
+      <div class="title-row"><img class="crest" id="crest" src="img/escudo.png" alt="Escudo de Lanús" onerror="this.hidden=true"><h1>11 <span>Granate</span></h1></div>
+      <p>Armá tu equipo ideal con los planteles de Lanús a lo largo de los años. Elegí formación, armá tu once con un DT y salí a ganar la copa.</p>
     </div>
     <div class="top-actions"><button class="ghost" id="reset">Empezar de nuevo</button></div>
   </header>
@@ -26,10 +27,22 @@
   </nav>
 
   <section class="sim" id="cup" hidden aria-live="polite"></section>
+  <div class="share" id="share" hidden role="dialog" aria-modal="true" aria-label="Imagen para compartir">
+    <div class="share-box">
+      <img id="shareImg" alt="Tu once en la cancha con el resultado de la copa">
+      <div class="share-actions">
+        <button class="btn" id="shareNative" hidden>Compartir</button>
+        <a class="btn alt" id="shareDl" download="11-granate.png" href="#">Descargar</a>
+        <button class="ghost" id="shareClose">Cerrar</button>
+      </div>
+      <p class="note">En el celular también podés mantener apretada la imagen para guardarla.</p>
+    </div>
+  </div>
 
   <main class="board">
     <section class="pitch-card" aria-label="Tu equipo">
-      <div class="pitch-head"><h2 id="fmTitle">Tu equipo · 4-3-3</h2><div class="media">Media <strong id="media">–</strong></div></div>
+      <div class="pitch-head"><h2 id="fmTitle">Tu equipo · 4-3-3</h2><div class="media">Fichados <strong id="media">0/12</strong></div></div>
+      <div class="level" id="level" aria-live="polite"></div>
       <div class="formations" id="formations" role="group" aria-label="Formación"></div>
       <div class="pitch" id="pitch">
         <svg viewBox="0 0 68 80" preserveAspectRatio="none" aria-hidden="true">
@@ -42,7 +55,7 @@
     </section>
 
     <section class="desk">
-      <div class="panel money">
+      <div class="panel money" id="moneyPanel">
         <div><div class="lab">Te queda</div><div class="big" id="left">€150,0 M</div></div>
         <div style="text-align:right"><div class="lab">Fichados</div><div class="big" id="count">0/12</div></div>
         <div class="bar"><i id="barfill" style="width:0%"></i></div>
@@ -64,6 +77,7 @@
       <div class="panel squad">
         <h3 id="sqTitle">Plantel</h3>
         <div id="squad"><p class="empty">Todavía no salió ninguna temporada.</p></div>
+        <p class="squad-hint" id="squadHint" hidden>Deslizá la lista para ver todo el plantel.</p>
       </div>
     </section>
   </main>
