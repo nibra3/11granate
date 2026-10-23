@@ -21,7 +21,8 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
 .brand h1{font-family:var(--display);font-size:clamp(40px,7vw,68px);line-height:.95;letter-spacing:.5px;text-transform:uppercase}
 .brand h1 span{color:var(--granate-ink)}
-.brand p{margin:6px 0 0;color:var(--muted);max-width:52ch}
+.brand{flex:1 1 440px;min-width:0}
+.brand p{margin:6px 0 0;color:#C5C4C9;max-width:900px}
 .top-actions{display:flex;gap:8px}
 .ghost{background:transparent;border:1.5px solid var(--line);border-radius:6px;padding:8px 14px;font-weight:600;font-size:14px}
 .ghost:hover{border-color:var(--ink)}
@@ -233,4 +234,84 @@ button.slot:focus-visible .disc{box-shadow:0 0 0 3px var(--ink)}
 .kit-sm{width:30px;vertical-align:-6px;margin-left:10px}
 .kit-xs{width:22px;vertical-align:-5px;margin-left:6px}
 #sqTitle{display:flex;align-items:center}
+/* ---- paleta oficial: negro, granate #641C34 y oro #B4984A ---- */
+:root{--paper:#0E0C0D;--card:#1C181A;--ink:#FFFFFF;--muted:#9A999D;--granate:#641C34;--granate-dark:#3A1020;--granate-soft:#2C141D;--granate-ink:#FFFFFF;--line:#3A3539;--line-soft:#2A2629;--field:#2E7D46;--gold:#B4984A}
+body{background:#0E0C0D}
+/* franja granate del título */
+.title-band{background:#641C34!important;padding-block:16px!important}
+.title{color:#FFFFFF!important}
+.title span{color:#641C34!important;-webkit-text-stroke:2px #FFFFFF;paint-order:stroke fill;text-shadow:0 0 1px #fff}
+/* tarjetas separadas del fondo */
+.panel,.pitch-card,.steps,.sim{border:1px solid #3A3539;box-shadow:none!important}
+/* pasos */
+.step{border-color:#3A3539!important} .step .n{color:#B4984A}
+.step.on{background:#641C34!important;box-shadow:inset 0 -3px 0 #B4984A} .step.on .n{color:#fff}
+.step.on .ic{background:#fff;color:#641C34;border-color:#fff}
+/* cancha */
+.pitch{border-color:#FFFFFF!important;background:repeating-linear-gradient(180deg,#2E7D46 0 10%,#286F3E 10% 20%)!important}
+.pitch svg *{stroke:rgba(255,255,255,.7)!important}
+.slot:not(.filled) .disc{border-color:rgba(255,255,255,.85);color:#fff;background:rgba(0,0,0,.28)}
+.pitch .slot .nm{text-shadow:0 1px 2px rgba(0,0,0,.8)} .pitch .slot .yr{color:#E8F0EA;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.slot.filled .disc{background:#641C34;color:#fff;box-shadow:0 0 0 2px #fff}
+.slot.hint .disc{background:#B4984A!important;color:#0E0C0D!important;border:2px solid #fff!important}
+button.slot:hover .disc{background:#C9AC5C!important}
+/* acentos oro */
+.fm{border-color:#3A3539} .fm.on{background:#B4984A;border-color:#B4984A;color:#0E0C0D}
+.level{border-color:#3A3539} .level b{color:#B4984A} .meter i{background:#641C34} .meter i.on{background:#B4984A;box-shadow:none}
+.season .yr{color:#fff} .season .yr.idle{color:#B4984A}
+.chip{background:#641C34;border-color:#641C34;color:#fff} .chip:hover{background:#fff;color:#641C34;border-color:#fff}
+.btn{background:#641C34;color:#fff} .btn.alt{border-color:#B4984A;color:#fff}
+.ghost{border-color:#3A3539}
+.grp{color:#B4984A} .pos{border-color:#3A3539;color:#fff}
+.pl > button[aria-expanded="true"],.pl > button:hover:not(:disabled){background:#2C141D}
+.cupmode{background:#641C34;border-color:#641C34;color:#fff} .cupmode.on{border-color:#B4984A}
+.tie{border-color:#3A3539} .tie.next{background:#641C34;border-color:#B4984A} .tie.won{border-color:#74C08A}
+.verdict h2.win{background:none;color:#B4984A}
+
+/* 4) "Empezar de nuevo" con fondo granate oficial */
+.top .ghost{background:#641C34;border-color:#641C34;color:#fff}
+.top .ghost:hover{background:#7A2442;border-color:#7A2442}
+
+/* 2) botón de tirar flotante: aparece cuando el botón original sale de pantalla */
+.fab{position:fixed;z-index:15;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  border:2px solid #B4984A!important;box-shadow:0 8px 24px rgba(0,0,0,.55);font-size:18px;padding:12px 18px}
+.fab:disabled{opacity:.5}
+
+/* 3) footer */
+.site-foot{background:#641C34;color:#fff;
+  margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)));margin-bottom:-48px;margin-top:40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:28px;
+  padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.foot-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px 40px;align-items:flex-start}
+.foot-brand{display:flex;align-items:center;gap:12px}
+.foot-brand img{width:44px;height:auto}
+.foot-brand b{font-family:var(--display);font-weight:400;font-size:26px;text-transform:uppercase;letter-spacing:.5px;display:block;line-height:1}
+.foot-brand small{color:#E7D3DA;font-size:13px}
+.foot-contact .lab{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#B4984A;font-weight:700}
+.foot-contact ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 18px}
+.foot-contact a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
+.foot-contact a:hover{border-color:#B4984A;color:#B4984A}
+.foot-legal{max-width:1180px;margin:18px auto 0;padding-top:14px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;color:#E7D3DA}
+/* panel de temporada como la referencia */
+.season .lab{font-size:15px;letter-spacing:.06em;color:#FFFFFF;font-weight:700}
+.season .dt{font-size:14px;color:#FFFFFF}
+.dice-row ~ .note,#note{font-size:14px;color:#E9E4E6;line-height:1.5}
+
+/* botón Tirar: llama la atención mientras espera que tires */
+.btn.attn{animation:attnPulse 1.6s ease-in-out infinite}
+.btn.attn svg{animation:diceShake 1.6s ease-in-out infinite;transform-origin:50% 50%}
+.btn.attn:hover{animation-play-state:paused}
+@keyframes attnPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(180,152,74,.0),0 0 0 0 rgba(100,28,52,.0);transform:scale(1)}
+  45%{box-shadow:0 0 0 4px rgba(180,152,74,.85),0 0 22px 6px rgba(180,152,74,.35);transform:scale(1.05)}
+  70%{transform:scale(1)}}
+@keyframes diceShake{
+  0%,30%,100%{transform:rotate(0)}
+  36%{transform:rotate(-18deg)} 44%{transform:rotate(16deg)} 52%{transform:rotate(-10deg)} 60%{transform:rotate(6deg)} 66%{transform:rotate(0)}}
+/* el título funciona como botón de inicio */
+.home-link{display:flex;text-decoration:none;color:inherit;width:fit-content;border-radius:6px;transition:transform .15s,opacity .15s}
+.title-band .home-link{max-width:1180px;margin:0 auto 0 max(0px,calc((100% - 1180px)/2))}
+.home-link:hover{opacity:.88}
+.home-link:active{transform:scale(.98)}
+.home-link:focus-visible{outline:2px solid #FFFFFF;outline-offset:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

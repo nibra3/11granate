@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
 <title>11 Granate</title>
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<div class="title-band"><div class="title-row"><img class="crest" id="crest" src="img/escudo.png" alt="Escudo de Lanús" onerror="this.hidden=true"><h1 class="title">11 <span>Granate</span></h1></div></div>
+<div class="title-band"><a class="title-row home-link" id="home" href="./" title="Volver al inicio" aria-label="11 Granate: volver al inicio y empezar de nuevo"><img class="crest" id="crest" src="img/escudo.png" alt="Escudo de Lanús" onerror="this.hidden=true"><h1 class="title">11 <span>Granate</span></h1></a></div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
       
-      <p>Armá tu equipo ideal con los planteles de Lanús a lo largo de los años. Elegí formación, armá tu once con un DT y salí a ganar la copa.</p>
+      <p>Armá el 11 ideal de Lanús mezclando jugadores de distintas épocas. Tirá el dado, te sale un plantel granate y elegí a uno solo: un jugador para la cancha o el DT para el banco. Cada plantel se puede usar hasta dos veces. Cuando completes el equipo, salí a jugar la copa: eliminación directa desde 16avos, contra rivales históricos o contra los mejores planteles del Grana. ¿Te da para levantarla?</p>
     </div>
     <div class="top-actions"><button class="ghost" id="reset">Empezar de nuevo</button></div>
   </header>
@@ -60,7 +60,7 @@
         <div><div class="lab">Te queda</div><div class="big" id="left">€150,0 M</div></div>
         <div style="text-align:right"><div class="lab">Fichados</div><div class="big" id="count">0/12</div></div>
         <div class="bar"><i id="barfill" style="width:0%"></i></div>
-        <div class="meta"><span id="spent">Gastado €0,0 M</span><span id="rerolls">3 retiradas</span></div>
+        <div class="meta"><span id="spent">Gastado €0,0 M</span><span id="rerolls">3 repeticiones</span></div>
       </div>
 
       <div class="panel">
@@ -77,12 +77,30 @@
 
       <div class="panel squad">
         <h3 id="sqTitle">Plantel</h3>
-        <div id="squad"><p class="empty">Todavía no salió ninguna temporada.</p></div>
+        <div id="squad"><p class="empty">Tirá el dado para sortear un plantel.</p></div>
         <p class="squad-hint" id="squadHint" hidden>Deslizá la lista para ver todo el plantel.</p>
       </div>
     </section>
   </main>
 </div>
+
+<button class="btn fab" id="fab" type="button" hidden aria-label="Tirar el dado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg><span id="fabTxt">Tirar</span></button>
+
+<footer class="site-foot">
+  <div class="foot-in">
+    <div class="foot-brand"><img src="img/escudo.png" alt="" onerror="this.remove()"><div><b>11 Granate</b><small>Un juego hecho por un hincha de Lanús.</small></div></div>
+    <div class="foot-contact">
+      <span class="lab">Contacto</span>
+      <ul>
+        <li>Nahuel</li>
+        <li><a href="https://github.com/nibra3" target="_blank" rel="noopener">GitHub · nibra3</a></li>
+        <!-- Para sumar más contactos, copiá esta línea y cambiá el link y el texto:
+        <li><a href="https://instagram.com/USUARIO" target="_blank" rel="noopener">Instagram · @usuario</a></li> -->
+      </ul>
+    </div>
+  </div>
+  <p class="foot-legal">Proyecto de un hincha, sin relación oficial con el Club Atlético Lanús.</p>
+</footer>
 
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>

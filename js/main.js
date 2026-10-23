@@ -210,7 +210,7 @@ function renderMoney(){
   const sp=spent(), l=left(), n=nPicks();
   $('left').textContent=fmt(l); $('left').classList.toggle('low', l<20 && n<12);
   $('count').textContent=n+'/12'; $('spent').textContent='Gastado '+fmt(sp);
-  $('rerolls').textContent=S.rerolls+(S.rerolls===1?' retirada':' retiradas');
+  $('rerolls').textContent=S.rerolls+(S.rerolls===1?' repetición':' repeticiones');
   $('barfill').style.width=Math.min(100,sp/BUDGET*100)+'%';
 }
 function renderSteps(){
@@ -218,6 +218,10 @@ function renderSteps(){
   $('st2').classList.toggle('on', !!S.season);
   $('st3').classList.toggle('on', complete());
 }
+function syncFab(){ const f=$('fab'); if(!f) return; $('fabTxt').textContent=$('rollTxt').textContent; f.disabled=$('roll').disabled; f.hidden=!fabWanted;
+  // el botón late solo cuando el siguiente paso es tirar el dado
+  const wait=!S.season && !complete(); $('roll').classList.toggle('attn',wait); f.classList.toggle('attn',wait); }
+let fabWanted=false;
 function renderDice(){
   const yr=$('yr'), btn=$('roll'), note=$('note');
   note.classList.remove('alert');
@@ -239,16 +243,16 @@ function renderDice(){
   $('dtline').innerHTML='DT: '+DATA[S.season].dt.map(d=>d.n).join(' / ')+(usesOf(S.season)?` · <span class="uses">Última vez que podés usar este plantel</span>`:'');
   if(!seasonPlayable(S.season)){
     $('rollTxt').textContent='Tirar gratis'; btn.disabled=false;
-    note.textContent='En este plantel no hay nadie que puedas fichar. Volvé a tirar sin gastar retiradas.'; note.classList.add('alert');
+    note.textContent='En este plantel no hay nadie que puedas fichar. Volvé a tirar sin gastar repeticiones.'; note.classList.add('alert');
   } else {
-    $('rollTxt').textContent='Retirar ('+S.rerolls+')'; btn.disabled = S.rerolls<=0;
-    if(!S.msg) note.textContent = S.rerolls>0 ? '¿No te gusta este plantel? Podés retirar, pero son limitadas.' : 'No te quedan retiradas: elegí a alguien de este plantel.';
+    $('rollTxt').textContent='Repetir ('+S.rerolls+')'; btn.disabled = S.rerolls<=0;
+    if(!S.msg) note.textContent = S.rerolls>0 ? '¿No te gusta este plantel? Podés repetir la tirada, pero son limitadas.' : 'No te quedan repeticiones: elegí a alguien de este plantel.';
   }
 }
 function renderSquad(){
   const box=$('squad');
   $('squadHint').hidden=true;
-  if(!S.season){ $('sqTitle').textContent='Plantel'; box.innerHTML=`<p class="empty">${complete()?'Equipo completo. Ahora jugá la copa.':'Todavía no salió ninguna temporada.'}</p>`; return; }
+  if(!S.season){ $('sqTitle').textContent='Plantel'; box.innerHTML=`<p class="empty">${complete()?'Equipo completo. Ahora jugá la copa.':'Tirá el dado para sortear un plantel.'}</p>`; return; }
   $('sqTitle').innerHTML='Plantel '+S.season+kitImg(S.season,'kit kit-sm');
   const prevScroll = box.querySelector('.squad-list')?.scrollTop ?? 0;
   const list=seasonPlayers(S.season).map(p=>({p,st:status(p)}));
@@ -270,7 +274,8 @@ function renderSquad(){
   const sl=$('squadList'); sl.scrollTop = S.open ? prevScroll : 0;
   $('squadHint').hidden = sl.scrollHeight <= sl.clientHeight;
 }
-function render(){ renderLevel(); renderFormations(); renderPitch(); renderMoney(); renderSteps(); renderDice(); renderSquad(); renderCup(); }
+function render(){ try{ renderAll(); } finally { syncFab(); } }
+function renderAll(){ renderLevel(); renderFormations(); renderPitch(); renderMoney(); renderSteps(); renderDice(); renderSquad(); renderCup(); }
 
 /* ---- acciones ---- */
 function roll(){
@@ -372,6 +377,8 @@ function fallback(txt){ const ta=document.createElement('textarea'); ta.value=tx
 document.addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t) return;
   if(t.id==='roll') roll();
+  else if(t.id==='fab'){ const had=complete(); roll();
+    if(!had && S.season){ const sq=document.querySelector('.squad'); const r=sq.getBoundingClientRect(); if(r.top<0||r.top>innerHeight*.6) sq.scrollIntoView({behavior:smooth(),block:'start'}); } }
   else if(t.dataset.f) setFormation(t.dataset.f);
   else if(t.id==='reset'||t.id==='newgame'){ S=fresh(S.formation); render(); window.scrollTo({top:0}); }
   else if(t.id==='next') playNext();
@@ -387,7 +394,7 @@ document.addEventListener('click',e=>{
 
 /* ---- imagen para compartir (1080×1350, formato vertical para WhatsApp e Instagram) ---- */
 let shareBlob=null;
-async function makeShareImage(){
+async function makeShareImage(noCrest){
   try{ await Promise.all(['96px Anton','600 26px "Hanken Grotesk"','500 20px "IBM Plex Mono"'].map(f=>document.fonts.load(f))); }catch(e){}
   const W=1080,H=1350,c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'), css=getComputedStyle(document.documentElement);
@@ -401,9 +408,9 @@ async function makeShareImage(){
 
   // título con escudo
   let tx=70; const crest=$('crest');
-  if(crest && !crest.hidden && crest.complete && crest.naturalWidth){ const h=104, w=h*crest.naturalWidth/crest.naturalHeight; x.drawImage(crest,70,58,w,h); tx=70+w+24; }
+  if(!noCrest && crest && !crest.hidden && crest.complete && crest.naturalWidth){ const h=104, w=h*crest.naturalWidth/crest.naturalHeight; x.drawImage(crest,70,58,w,h); tx=70+w+24; }
   x.textBaseline='alphabetic'; x.font=`104px ${DISP}`; x.fillStyle=INK; x.fillText('11 ',tx,156);
-  x.fillStyle='#7d0000'; x.fillText('GRANATE',tx+x.measureText('11 ').width,156);
+  { const gx=tx+x.measureText('11 ').width; x.lineWidth=4; x.strokeStyle='#FFFFFF'; x.strokeText('GRANATE',gx,156); x.fillStyle='#641C34'; x.fillText('GRANATE',gx,156); }
 
   // formación y nivel
   const T=teamRating(), L=LEVELS[levelOf(T)];
@@ -413,8 +420,8 @@ async function makeShareImage(){
 
   // cancha
   const P={x:70,y:262,w:940,h:780};
-  x.fillStyle=FIELD; x.fillRect(P.x,P.y,P.w,P.h);
-  x.strokeStyle=GRD; x.lineWidth=5;
+  for(let i=0;i<10;i++){ x.fillStyle=i%2?'#286F3E':'#2E7D46'; x.fillRect(P.x,P.y+i*P.h/10,P.w,P.h/10+1); }
+  x.strokeStyle='rgba(255,255,255,.7)'; x.lineWidth=5;
   x.strokeRect(P.x+12,P.y+12,P.w-24,P.h-24);
   x.beginPath(); x.moveTo(P.x+12,P.y+P.h/2); x.lineTo(P.x+P.w-12,P.y+P.h/2); x.stroke();
   x.beginPath(); x.arc(P.x+P.w/2,P.y+P.h/2,86,0,Math.PI*2); x.stroke();
@@ -429,7 +436,7 @@ async function makeShareImage(){
     x.textAlign='center'; x.textBaseline='middle'; x.fillStyle=INK; x.font=`600 ${Math.round(22*k)}px ${MONO}`; x.fillText(pos,cx,cy+1);
     x.textBaseline='alphabetic';
     const nm=last(p.n); fitText(nm,maxW,Math.round(28*k),700,BODY); x.fillStyle=INK; x.fillText(nm,cx,cy+r+34*k);
-    x.font=`500 ${Math.round(22*k)}px ${MONO}`; x.fillStyle=MUTED; x.fillText(String(p.year),cx,cy+r+62*k);
+    x.font=`500 ${Math.round(22*k)}px ${MONO}`; x.fillStyle='#E8F0EA'; x.fillText(String(p.year),cx,cy+r+62*k);
     x.textAlign='left';
   };
   rows.forEach((row,ri)=>{
@@ -462,8 +469,9 @@ async function makeShareImage(){
   return c;
 }
 async function openShare(){
-  const c=await makeShareImage();
-  const url=c.toDataURL('image/png');
+  let c=await makeShareImage(), url;
+  // abierto como archivo local, el navegador no deja exportar la imagen con el escudo: se genera sin él
+  try{ url=c.toDataURL('image/png'); }catch(e){ c=await makeShareImage(true); url=c.toDataURL('image/png'); }
   $('shareImg').src=url; $('shareDl').href=url;
   shareBlob=await new Promise(r=>c.toBlob(r,'image/png'));
   let canShare=false;
@@ -477,5 +485,11 @@ async function nativeShare(){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('share').hidden) $('share').hidden=true; });
 $('share').addEventListener('click',e=>{ if(e.target.id==='share') $('share').hidden=true; });
 
+// el título lleva al inicio y arranca una partida nueva, igual que "Empezar de nuevo"
+document.getElementById('home').addEventListener('click',e=>{ e.preventDefault(); S=fresh(S.formation); render(); $('share').hidden=true; window.scrollTo({top:0,behavior:smooth()}); });
+// el botón flotante aparece solo cuando el botón original de tirar no se ve
+if('IntersectionObserver' in window){
+  new IntersectionObserver(es=>{ fabWanted=!es[0].isIntersecting; syncFab(); },{threshold:0}).observe(document.getElementById('roll'));
+}
 function start(data){ S = data && data.picks && data.formation && FORMATIONS[data.formation] ? data : fresh(); S.uses=S.uses||{}; render(); }
 start({});
