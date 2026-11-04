@@ -321,19 +321,72 @@ function playMatch(T,R){
   const us=poisson(1.35*Math.exp(d)), them=poisson(1.35*Math.exp(-d));
   const goals=[]; for(let i=0;i<us;i++) goals.push({m:1+Math.floor(Math.random()*90),p:scorer()});
   goals.sort((a,b)=>a.m-b.m);
+  const against=[]; for(let i=0;i<them;i++) against.push(1+Math.floor(Math.random()*90)); // minutos de los goles del rival
+  against.sort((a,b)=>a-b);
   let pens=null, win=us>them;
   if(us===them){ const pw=Math.min(.8,Math.max(.2,.5+(T-R)*.02)); win=Math.random()<pw;
     const a=3+Math.floor(Math.random()*3), b=a-1-(Math.random()<.4?1:0); pens= win?[a,b]:[b,a]; }
-  return {us,them,goals,pens,win};
+  return {us,them,goals,against,pens,win};
 }
-const cupStarted = () => !!(S.cup && S.cup.results.length);
+const cupStarted = () => !!(S.cup && (S.cup.results.length || LIVE));
 const cupOver = () => S.cup && (S.cup.results.length===ROUNDS.length || S.cup.results.some(r=>!r.win));
-function playNext(){
-  if(!S.cup||cupOver()) return;
-  const i=S.cup.results.length, R=CUP_TEAMS[S.cup.rivals[i]].r;
-  S.cup.results.push(playMatch(teamRating(),R)); render();
+
+/* Cómo se juegan los partidos: resultado directo o minuto a minuto (ms por minuto de juego) */
+const SPEEDS = {
+  auto: {n:'Resultado directo'},
+  slow: {n:'Lento',      ms:330},  // ~30 segundos por partido
+  fast: {n:'Rápido',     ms:110},  // ~10 segundos
+  xfast:{n:'Muy rápido', ms:35}    // ~3 segundos
+};
+let SPEED = 'auto';
+try{ const s=localStorage.getItem('11g-speed'); if(SPEEDS[s]) SPEED=s; }catch(e){}
+function setSpeed(s){
+  if(!SPEEDS[s]) return; SPEED=s;
+  try{ localStorage.setItem('11g-speed',s); }catch(e){}
+  if(LIVE){ if(s==='auto') finishLive(); else { clearInterval(LIVE.timer); LIVE.timer=setInterval(tick,SPEEDS[s].ms); } }
+  render();
 }
-function playAll(){ while(S.cup && !cupOver()) playNext(); }
+
+/* Partido en vivo: el reloj avanza de a un minuto y los goles aparecen cuando llegan */
+let LIVE = null;
+function playNext(){
+  if(!S.cup||cupOver()||LIVE) return;
+  const i=S.cup.results.length, R=CUP_TEAMS[S.cup.rivals[i]].r;
+  const m=playMatch(teamRating(),R);
+  if(SPEED==='auto'){ S.cup.results.push(m); render(); return; }
+  LIVE={i,m,min:0,timer:setInterval(tick,SPEEDS[SPEED].ms)};
+  render();
+}
+function tick(){
+  if(!LIVE) return;
+  LIVE.min++;
+  if(LIVE.min>=90){ finishLive(); return; }
+  updateLive();
+}
+function finishLive(){
+  if(!LIVE) return;
+  clearInterval(LIVE.timer);
+  const m=LIVE.m; LIVE=null;
+  if(S.cup) S.cup.results.push(m);
+  render();
+}
+function stopLive(){ if(LIVE){ clearInterval(LIVE.timer); LIVE=null; } }
+function liveFeed(){
+  const {m,min}=LIVE, rival=CUP_TEAMS[S.cup.rivals[LIVE.i]];
+  const ev=[...m.goals.filter(g=>g.m<=min).map(g=>({m:g.m,t:last(g.p.n),mine:true})),
+            ...m.against.filter(x=>x<=min).map(x=>({m:x,t:'Gol de '+rival.n,mine:false}))].sort((a,b)=>a.m-b.m);
+  return {us:m.goals.filter(g=>g.m<=min).length, them:m.against.filter(x=>x<=min).length,
+    html: ev.map(e=>`<li class="${e.mine?'mine':'theirs'}">${e.m}' ${e.t}</li>`).join('') || '<li>Todavía no hay goles</li>'};
+}
+/* Cada minuto solo se actualizan el reloj, el marcador y los goles (no toda la copa), así los botones siguen andando */
+function updateLive(){
+  const f=liveFeed(), q=id=>document.getElementById(id);
+  if(!q('liveClock')) return;
+  q('liveClock').textContent=LIVE.min+"'";
+  q('liveUs').textContent=f.us; q('liveThem').textContent=f.them;
+  q('liveGoals').innerHTML=f.html;
+}
+function playAll(){ finishLive(); while(S.cup && !cupOver()){ const i=S.cup.results.length; S.cup.results.push(playMatch(teamRating(),CUP_TEAMS[S.cup.rivals[i]].r)); } render(); }
 
 function renderCup(){
   const el=$('cup');
@@ -348,22 +401,28 @@ function renderCup(){
   else if(lost){ title='Afuera en '+(ROUNDS[lostIdx].rd==='Final'?'la final':ROUNDS[lostIdx].rd.toLowerCase()); sub=`Te eliminó ${CUP_TEAMS[S.cup.rivals[lostIdx]].n} ${CUP_TEAMS[S.cup.rivals[lostIdx]].y}.`; }
   const nextRd = !over ? ROUNDS[res.length].rd : null;
   const started=cupStarted();
+  if(LIVE){ sub=`Se está jugando ${ROUNDS[LIVE.i].rd==='Final'?'la final':ROUNDS[LIVE.i].rd.toLowerCase()} contra ${CUP_TEAMS[S.cup.rivals[LIVE.i]].n} ${CUP_TEAMS[S.cup.rivals[LIVE.i]].y}.`; }
   const tabs=`<div class="cupmodes" role="group" aria-label="Elegí la copa">${Object.entries(CUP_MODES).map(([k,v])=>`<button class="cupmode${k===mode?' on':''}" data-mode="${k}" aria-pressed="${k===mode}" ${started&&k!==mode?'disabled':''}>${v.name}</button>`).join('')}</div>`;
-  el.innerHTML=tabs+`<div class="verdict"><div><h2 class="${champ?'win':''}">${title}</h2><p class="note">${sub}</p></div></div>
+  const speeds=`<div class="speeds" role="group" aria-label="Cómo se juegan los partidos"><span class="lab">Partidos</span>${Object.entries(SPEEDS).map(([k,v])=>
+    `${k==='slow'?'<span class="sep">Minuto a minuto:</span>':''}<button class="speed${k===SPEED?' on':''}" data-speed="${k}" aria-pressed="${k===SPEED}">${v.n}</button>`).join('')}</div>`;
+  const lv = LIVE ? liveFeed() : null;
+  el.innerHTML=tabs+speeds+`<div class="verdict"><div><h2 class="${champ?'win':''}">${title}</h2><p class="note">${sub}</p></div></div>
   <ol class="bracket">${ROUNDS.map((r,i)=>{
-    const t=CUP_TEAMS[S.cup.rivals[i]], m=res[i];
-    const state = m ? (m.win?'won':'lost') : (lost||i>res.length ? 'locked' : 'next');
-    const shown = m || state==='next' || !lost;
+    const t=CUP_TEAMS[S.cup.rivals[i]], m=res[i], live=LIVE&&LIVE.i===i;
+    const state = live ? 'live' : m ? (m.win?'won':'lost') : (lost||i>res.length ? 'locked' : 'next');
+    const shown = m || live || state==='next' || !lost;
     return `<li class="tie ${state}">
-      <span class="rd">${r.rd}</span>
-      <div class="sc"><span class="team">${mode==='lanus'?'Tu 11':'Lanús'}</span><strong>${m?m.us:''}</strong></div>
-      <div class="sc"><span class="team">${shown?`${t.n} <em>${t.y}</em>${String(S.cup.rivals[i]).startsWith('lan')?kitImg(t.y,'kit kit-xs'):''}`:'—'}</span><strong>${m?m.them:''}</strong></div>
+      <span class="rd">${r.rd}${live?` <span class="clock">En vivo · <b id="liveClock">${LIVE.min}'</b></span>`:''}</span>
+      <div class="sc"><span class="team">${mode==='lanus'?'Tu 11':'Lanús'}</span><strong${live?' id="liveUs"':''}>${live?lv.us:m?m.us:''}</strong></div>
+      <div class="sc"><span class="team">${shown?`${t.n} <em>${t.y}</em>${String(S.cup.rivals[i]).startsWith('lan')?kitImg(t.y,'kit kit-xs'):''}`:'—'}</span><strong${live?' id="liveThem"':''}>${live?lv.them:m?m.them:''}</strong></div>
       <span class="pk">${m&&m.pens?`Penales ${m.pens[0]}–${m.pens[1]}`:shown?t.c:''}</span>
-      ${m?`<ul>${m.goals.map(g=>`<li>${g.m}' ${last(g.p.n)}</li>`).join('')||'<li>Sin goles tuyos</li>'}</ul>`:''}
+      ${live?`<ul id="liveGoals" aria-live="polite">${lv.html}</ul>`
+        :m?`<ul>${m.goals.map(g=>`<li>${g.m}' ${last(g.p.n)}</li>`).join('')||'<li>Sin goles tuyos</li>'}</ul>`:''}
     </li>`;}).join('')}</ol>
-  <div class="sim-actions">${!over?`<button class="btn" id="next">Jugar ${nextRd}</button><button class="btn alt" id="all">Simular hasta el final</button>`
+  <div class="sim-actions">${LIVE?`<button class="btn" id="skip">Ver el resultado</button>`
+    :!over?`<button class="btn" id="next">Jugar ${nextRd}</button><button class="btn alt" id="all">Simular hasta el final</button>`
     :`<button class="btn" id="newgame">Armar otro equipo</button>`}
-    <button class="ghost" id="shot">Compartir imagen</button></div>`;
+    ${LIVE?'':'<button class="ghost" id="shot">Compartir imagen</button>'}</div>`;
 }
 function shareText(){
   const lines=slots().map(s=>{const p=S.picks[s.id];return `${s.pos} ${p.n} (${p.year})`});
@@ -380,9 +439,11 @@ document.addEventListener('click',e=>{
   else if(t.id==='fab'){ const had=complete(); roll();
     if(!had && S.season){ const sq=document.querySelector('.squad'); const r=sq.getBoundingClientRect(); if(r.top<0||r.top>innerHeight*.6) sq.scrollIntoView({behavior:smooth(),block:'start'}); } }
   else if(t.dataset.f) setFormation(t.dataset.f);
-  else if(t.id==='reset'||t.id==='newgame'){ S=fresh(S.formation); render(); window.scrollTo({top:0}); }
+  else if(t.id==='reset'||t.id==='newgame'){ stopLive(); S=fresh(S.formation); render(); window.scrollTo({top:0}); }
   else if(t.id==='next') playNext();
   else if(t.id==='all') playAll();
+  else if(t.id==='skip') finishLive();
+  else if(t.dataset.speed) setSpeed(t.dataset.speed);
   else if(t.dataset.mode){ if(!cupStarted()){ newCup(t.dataset.mode); render(); } }
   else if(t.id==='shot') openShare();
   else if(t.id==='shareNative') nativeShare();
@@ -486,7 +547,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('share').hidd
 $('share').addEventListener('click',e=>{ if(e.target.id==='share') $('share').hidden=true; });
 
 // el título lleva al inicio y arranca una partida nueva, igual que "Empezar de nuevo"
-document.getElementById('home').addEventListener('click',e=>{ e.preventDefault(); S=fresh(S.formation); render(); $('share').hidden=true; window.scrollTo({top:0,behavior:smooth()}); });
+document.getElementById('home').addEventListener('click',e=>{ e.preventDefault(); stopLive(); S=fresh(S.formation); render(); $('share').hidden=true; window.scrollTo({top:0,behavior:smooth()}); });
 // el botón flotante aparece solo cuando el botón original de tirar no se ve
 if('IntersectionObserver' in window){
   new IntersectionObserver(es=>{ fabWanted=!es[0].isIntersecting; syncFab(); },{threshold:0}).observe(document.getElementById('roll'));

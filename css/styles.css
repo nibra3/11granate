@@ -315,3 +315,19 @@ button.slot:hover .disc{background:#C9AC5C!important}
 .home-link:active{transform:scale(.98)}
 .home-link:focus-visible{outline:2px solid #FFFFFF;outline-offset:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* cómo se juegan los partidos: resultado directo o minuto a minuto */
+.speeds{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.speeds .lab{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#B4984A;font-weight:700;margin-right:4px}
+.speeds .sep{font-size:13px;color:var(--muted);margin-left:8px}
+.speed{background:transparent;color:#fff;border:1.5px solid #3A3539;border-radius:6px;padding:7px 12px;font-weight:600;font-size:14px}
+.speed:hover{border-color:#fff}
+.speed.on{background:#B4984A;border-color:#B4984A;color:#0E0C0D}
+/* partido en vivo */
+.tie.live{background:#641C34;border-color:#B4984A;box-shadow:0 0 0 2px rgba(180,152,74,.35);animation:none}
+.tie.live .rd,.tie.live .pk,.tie.live .team em,.tie.live ul{color:#fff}
+.tie .clock{float:right;letter-spacing:.04em;text-transform:none;font-family:var(--mono);font-weight:600}
+.tie .clock::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#E5484D;margin-right:6px;vertical-align:1px;animation:blink 1s steps(2) infinite}
+.tie.live ul li.theirs{color:#E7D3DA;opacity:.8}
+.tie.live ul li.mine{font-weight:700}
+@keyframes blink{50%{opacity:.2}}
