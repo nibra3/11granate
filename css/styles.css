@@ -367,3 +367,59 @@ button.ms{cursor:pointer;font:inherit}
 .mini.small{width:auto}
 .mini.small .mini-pitch,.mini.small .mini-dt{display:none}
 .mini.small .mini-head{padding:0 2px}
+
+/* botones de la copa: la llave a jugar con recuadro dorado, "simular hasta el final" sin dorado */
+#next{border:2px solid #B4984A}
+#all{border:2px solid #3A3539}
+#all:hover{background:#2C141D}
+
+/* donaciones en el footer */
+.foot-donate{max-width:340px}
+.foot-donate .lab{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#B4984A;font-weight:700}
+.foot-donate p{margin:6px 0 0;font-size:14px}
+.foot-donate .alias{font-size:13px;color:#E7D3DA;line-height:1.6}
+.foot-donate .alias b{color:#fff}
+
+/* ---- resumen al terminar la copa ---- */
+.summary{position:fixed;inset:0;z-index:25;background:rgba(10,4,6,.88);display:grid;place-items:center;overflow-y:auto;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.sum-box{width:100%;max-width:420px;background:#1C181A;border:2px solid #B4984A;border-radius:8px;padding:18px 18px 14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.7);animation:sumIn .35s both;text-align:center}
+@keyframes sumIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.sum-top{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);
+  padding-bottom:10px;border-bottom:1px solid #3A3539;text-align:left}
+.sum-top span:first-child{font-family:var(--display);font-size:16px;color:#fff;letter-spacing:.5px}
+.sum-box h2{font-family:var(--display);font-size:clamp(40px,12vw,58px);text-transform:uppercase;line-height:1;margin-top:14px;color:#fff}
+.sum-box h2.win{color:#B4984A;text-shadow:3px 3px 0 #641C34}
+.sum-sub{margin:6px 0 0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sum-level{margin-top:14px;background:#641C34;border-radius:6px;padding:10px 12px}
+.sum-level .lab,.sum-boot .lab{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#E7D3DA;font-weight:700}
+.sum-level b{display:block;font-family:var(--display);font-weight:400;font-size:26px;text-transform:uppercase;color:#B4984A;line-height:1.1}
+.sum-level small{font-size:12px;color:#E7D3DA}
+.sum-stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;border:1.5px solid #B4984A;border-radius:6px;overflow:hidden}
+.sum-stats div{padding:8px 4px;border-left:1px solid #3A3539}
+.sum-stats div:first-child{border-left:0}
+.sum-stats b{display:block;font-family:var(--display);font-weight:400;font-size:28px;line-height:1;color:#fff}
+.sum-stats span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:3px}
+.sum-boot{margin-top:12px;border:1.5px dashed #B4984A;border-radius:6px;padding:10px}
+.sum-boot .lab{color:#B4984A}
+.sum-boot b{display:block;font-family:var(--display);font-weight:400;font-size:24px;text-transform:uppercase;color:#fff;margin-top:2px}
+.sum-boot b em{font-style:normal;color:#B4984A;margin-left:4px}
+.sum-boot small{font-size:12px;color:var(--muted)}
+.sum-legend{margin:12px 0 6px;font-size:11px;color:var(--muted);text-align:left;display:flex;align-items:center;gap:6px}
+.sum-legend .dot{width:9px;height:9px;border-radius:50%;background:#B4984A}
+.sum-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;text-align:left}
+.sum-list li{display:flex;align-items:center;gap:8px;border:1px solid #3A3539;border-radius:4px;padding:5px 8px;font-size:13px}
+.sum-list .ps{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);width:30px;flex:none}
+.sum-list .nm{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-list .gl{font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.sum-list .yr{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-list li.star{border-color:#B4984A;background:rgba(180,152,74,.08)}
+.sum-list li.star .nm{color:#B4984A}
+.sum-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+.sum-actions .btn{font-size:16px;padding:10px 14px}
+.sum-foot{margin:12px 0 0;padding-top:10px;border-top:1px solid #3A3539;font-family:var(--mono);font-size:11px;color:var(--muted)}
+/* si el resumen es más alto que la pantalla, arranca desde arriba y se puede scrollear */
+.summary{display:flex}
+.sum-box{margin:auto}
+.sum-list li{padding:4px 8px}

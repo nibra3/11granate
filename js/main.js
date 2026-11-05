@@ -100,7 +100,6 @@ function fit(slotPos,p){
   const L=posList(p);
   if(slotPos==='DT'||L.includes('DT')) return (slotPos==='DT'&&L.includes('DT'))?0:null;
   if(L.includes(slotPos)) return 0;
-  if(slotPos==='MC' && L.includes('MCO')) return 0;
   return null; // sin puestos parecidos: solo juega donde figura en el Excel
 }
 const nPicks = () => Object.keys(S.picks).length;
@@ -239,7 +238,8 @@ function renderSteps(){
 }
 function syncFab(){ const f=$('fab'); if(!f) return; $('fabTxt').textContent=$('rollTxt').textContent; f.disabled=$('roll').disabled; f.hidden=!fabWanted;
   // el botón late solo cuando el siguiente paso es tirar el dado
-  const wait=!S.season && !complete(); $('roll').classList.toggle('attn',wait); f.classList.toggle('attn',wait); }
+  // anima el botón mientras espera que tires, y también "Ir a la copa" hasta que entrás a la copa
+  const wait=(!S.season && !complete()) || (complete() && !S.cup); $('roll').classList.toggle('attn',wait); f.classList.toggle('attn',wait); }
 let fabWanted=false;
 function renderDice(){
   const yr=$('yr'), btn=$('roll'), note=$('note');
@@ -293,7 +293,7 @@ function renderSquad(){
   const sl=$('squadList'); sl.scrollTop = S.open ? prevScroll : 0;
   $('squadHint').hidden = sl.scrollHeight <= sl.clientHeight;
 }
-function render(){ try{ renderAll(); } finally { syncFab(); } }
+function render(){ try{ renderAll(); } finally { syncFab(); maybeSummary(); } }
 function renderAll(){ renderLevel(); renderFormations(); renderPitch(); renderMoney(); renderSteps(); renderDice(); renderSquad(); renderCup(); renderMini(); }
 
 /* ---- acciones ---- */
@@ -336,16 +336,40 @@ function scorer(){
   for(const [p,x] of w){t-=x; if(t<=0) return p;}
   return w[0][0];
 }
+/* ---- chances de levantar la copa según el nivel del equipo ----
+   Pelea el descenso 1 de cada 6 · Mitad de tabla 2/6 · Entra a copas 3/6 · Candidato 4/6 · Equipo de época 5/6.
+   Primero se decide si ganás cada partido (los rivales más fuertes cuestan un poco más) y después se arma un resultado creíble. */
+const CUP_TARGET = [1/6, 2/6, 3/6, 4/6, 5/6];          // uno por cada nivel de LEVELS
+const RIVAL_WEIGHT = 25;                                 // cuánto pesa el rival: más chico = más diferencia entre rivales flojos y fuertes
+const allRivals = mode => CUP_MODES[mode].rounds.flatMap(r=>r.pool.map(k=>CUP_TEAMS[k].r));
+const rivalFactor = (mode,R) => { const a=allRivals(mode), avg=a.reduce((x,y)=>x+y,0)/a.length; return Math.exp((avg-R)/RIVAL_WEIGHT); };
+const winP = (q,mode,R) => Math.min(.995, q*rivalFactor(mode,R));
+// para cada copa y nivel busca la chance base por partido que da la chance de copa pedida
+const CUP_Q = {};
+for(const mode of Object.keys(CUP_MODES)){
+  CUP_Q[mode] = CUP_TARGET.map(target=>{ let lo=0, hi=3;
+    for(let it=0; it<40; it++){ const q=(lo+hi)/2;
+      const P=CUP_MODES[mode].rounds.reduce((acc,r)=>acc*r.pool.reduce((s,k)=>s+winP(q,mode,CUP_TEAMS[k].r),0)/r.pool.length,1);
+      if(P<target) lo=q; else hi=q; }
+    return (lo+hi)/2; });
+}
+function matchWinChance(T,R){
+  const mode=(S&&S.cup&&S.cup.mode)||'hist';
+  return winP(CUP_Q[mode][levelOf(T)], mode, R);
+}
 function playMatch(T,R){
-  const d=(T-R)/12;
-  const us=poisson(1.35*Math.exp(d)), them=poisson(1.35*Math.exp(-d));
+  const win = Math.random() < matchWinChance(T,R);
+  // marcador: goles con un modelo de Poisson, quedándonos con uno que cuadre con quién gana
+  const d=(T-R)/12; let us, them;
+  for(let n=0;;n++){ us=poisson(1.35*Math.exp(d)); them=poisson(1.35*Math.exp(-d));
+    if(us===them ? Math.random()<.35 : (win ? us>them : us<them)) break; // empates (penales) solo a veces
+    if(n>200){ us=win?1:0; them=win?0:1; break; } }
   const goals=[]; for(let i=0;i<us;i++) goals.push({m:1+Math.floor(Math.random()*90),p:scorer()});
   goals.sort((a,b)=>a.m-b.m);
   const against=[]; for(let i=0;i<them;i++) against.push(1+Math.floor(Math.random()*90)); // minutos de los goles del rival
   against.sort((a,b)=>a-b);
-  let pens=null, win=us>them;
-  if(us===them){ const pw=Math.min(.8,Math.max(.2,.5+(T-R)*.02)); win=Math.random()<pw;
-    const a=3+Math.floor(Math.random()*3), b=a-1-(Math.random()<.4?1:0); pens= win?[a,b]:[b,a]; }
+  let pens=null;
+  if(us===them){ const a=3+Math.floor(Math.random()*3), b=a-1-(Math.random()<.4?1:0); pens= win?[a,b]:[b,a]; }
   return {us,them,goals,against,pens,win};
 }
 const cupStarted = () => !!(S.cup && (S.cup.results.length || LIVE));
@@ -446,6 +470,59 @@ function renderCup(){
         :m?`<ul>${m.goals.map(g=>`<li>${g.m}' ${last(g.p.n)}</li>`).join('')||'<li>Sin goles tuyos</li>'}</ul>`:''}
     </li>`;}).join('')}</ol>`;
 }
+/* ---- resumen al terminar la copa ---- */
+function maybeSummary(){
+  if(!S.cup || LIVE || !cupOver() || S.cup.summaryShown) return;
+  S.cup.summaryShown=true;
+  setTimeout(openSummary, 450); // un respiro para que se vea el último resultado
+}
+function openSummary(){
+  if(!S.cup) return;
+  const res=S.cup.results, champ=res.length===ROUNDS.length && res.every(r=>r.win);
+  const lostI=res.findIndex(r=>!r.win), T=teamRating(), L=LEVELS[levelOf(T)];
+  const gf=res.reduce((a,m)=>a+m.us,0), gc=res.reduce((a,m)=>a+m.them,0), won=res.filter(r=>r.win).length;
+  const pens=res.filter(m=>m.pens).length;
+  const rdName=i=>ROUNDS[i].rd==='Final'?'la final':ROUNDS[i].rd.toLowerCase();
+  const rival=i=>CUP_TEAMS[S.cup.rivals[i]];
+  const title = champ ? '¡Campeón!' : 'Afuera en '+rdName(lostI);
+  const sub = champ ? (res.every(m=>!m.pens)?'Campaña perfecta · ganaste las 5 llaves':'Ganaste las 5 llaves')
+                    : `Te eliminó ${rival(lostI).n} ${rival(lostI).y}`;
+  // goleadores de la copa
+  const tally={};
+  res.forEach(m=>m.goals.forEach(g=>{ if(!g.p) return; const k=g.p.n+'|'+g.p.year; (tally[k]=tally[k]||{p:g.p,n:0}).n++; }));
+  const tops=Object.values(tally).sort((a,b)=>b.n-a.n);
+  const boot = tops.length
+    ? `<div class="sum-boot"><span class="lab">Bota de oro</span><b>${last(tops[0].p.n)} <em>${tops[0].n}</em></b>`
+      +`<small>${tops[0].p.year}${tops[1]?` · Lo sigue ${last(tops[1].p.n)} con ${tops[1].n}`:''}</small></div>`
+    : `<div class="sum-boot"><span class="lab">Bota de oro</span><b>Desierta</b><small>Tu equipo no metió goles en la copa</small></div>`;
+  // los 3 mejores del equipo van en dorado
+  const list=slots().map(sl=>({sl,p:S.picks[sl.id]})).filter(x=>x.p);
+  const best=new Set(list.filter(x=>x.sl.pos!=='DT').map(x=>x.p).sort((a,b)=>(b.r-b.pen)-(a.r-a.pen)).slice(0,3));
+  const goalsOf=p=>tally[p.n+'|'+p.year]?.n||0;
+  const rows=list.map(({sl,p})=>`<li class="${best.has(p)?'star':''}"><span class="ps">${sl.pos}</span><span class="nm">${p.n}</span>`
+    +`${goalsOf(p)?`<span class="gl" title="Goles en la copa">⚽ ${goalsOf(p)}</span>`:''}<span class="yr">${p.year}</span></li>`).join('');
+  $('sumBox').innerHTML=`
+    <div class="sum-top"><span>11 GRANATE</span><span>${CUP_MODES[S.cup.mode||'hist'].name} · ${S.formation}</span></div>
+    <h2 id="sumTitle" class="${champ?'win':''}">${title}</h2>
+    <p class="sum-sub">${sub}</p>
+    <div class="sum-level"><span class="lab">Nivel del equipo</span><b>${L.n}</b><small>${L.d}</small></div>
+    <div class="sum-stats">
+      <div><b>${gf}</b><span>Goles a favor</span></div>
+      <div><b>${gc}</b><span>En contra</span></div>
+      <div><b>${won}/${res.length}</b><span>Ganados</span></div>
+      <div><b>${pens}</b><span>Por penales</span></div>
+    </div>
+    ${boot}
+    <p class="sum-legend"><span class="dot"></span> Los 3 mejores de tu equipo</p>
+    <ol class="sum-list">${rows}</ol>
+    <div class="sum-actions">
+      <button class="btn" id="sumShare">Compartir imagen</button>
+      <button class="btn alt" id="sumAgain">Empezar de nuevo</button>
+      <button class="ghost" id="sumClose">Cerrar</button>
+    </div>
+    <p class="sum-foot">nibra3.github.io/11granate · armá el tuyo</p>`;
+  $('summary').hidden=false; $('summary').scrollTop=0; $('sumClose').focus({preventScroll:true});
+}
 function shareText(){
   const lines=slots().map(s=>{const p=S.picks[s.id];return `${s.pos} ${p.n} (${p.year})`});
   const res=S.cup?S.cup.results:[];
@@ -469,6 +546,9 @@ document.addEventListener('click',e=>{
   else if(t.dataset.speed) setSpeed(t.dataset.speed);
   else if(t.dataset.mode){ if(!cupStarted()){ newCup(t.dataset.mode); render(); } }
   else if(t.id==='shot') openShare();
+  else if(t.id==='sumShare'){ $('summary').hidden=true; openShare(); }
+  else if(t.id==='sumClose') $('summary').hidden=true;
+  else if(t.id==='sumAgain'){ $('summary').hidden=true; stopLive(); S=fresh(S.formation); render(); window.scrollTo({top:0}); }
   else if(t.id==='shareNative') nativeShare();
   else if(t.id==='shareClose') $('share').hidden=true;
   else if(t.dataset.put) place(t.dataset.who,null,t.dataset.put);
@@ -575,7 +655,8 @@ async function copyLink(btn){
 async function nativeShare(){
   try{ await navigator.share({files:[new File([shareBlob],'11-granate.png',{type:'image/png'})],title:'11 Granate',text:'Mirá el 11 Granate que armé. Armá el tuyo acá: '+GAME_URL}); }catch(e){}
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('share').hidden) $('share').hidden=true; });
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if(!$('share').hidden) $('share').hidden=true; else if(!$('summary').hidden) $('summary').hidden=true; });
+$('summary').addEventListener('click',e=>{ if(e.target.id==='summary') $('summary').hidden=true; });
 $('share').addEventListener('click',e=>{ if(e.target.id==='share') $('share').hidden=true; });
 
 // el título lleva al inicio y arranca una partida nueva, igual que "Empezar de nuevo"
