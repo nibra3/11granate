@@ -205,6 +205,22 @@ function slotEl(s){
     : `<div class="disc">${s.pos}</div><div class="nm"></div>`;
   return d;
 }
+/* mini cancha: misma formación en chiquito, para ver cómo queda el equipo sin bajar hasta la cancha */
+function renderMini(){
+  const rows=FORMATIONS[S.formation], all=slots();
+  const openPl = S.open && S.season ? seasonPlayers(S.season).find(x=>key(x)===S.open) : null;
+  const pill=s=>{ const p=S.picks[s.id], hint=openPl && !p && fit(s.pos,openPl.p)!==null;
+    const cls='mp'+(p?' filled':'')+(hint?' hint':''), txt=p?last(p.n):s.pos;
+    return hint ? `<button type="button" class="${cls}" data-put="${s.id}" data-who="${S.open}" aria-label="Poner a ${openPl.n} de ${s.pos}">${txt}</button>`
+                : `<span class="${cls}" title="${s.pos}">${txt}</span>`; };
+  $('miniRows').innerHTML = rows.map((_,ri)=>`<div class="mini-row">${all.filter(s=>s.row===ri).map(pill).join('')}</div>`).join('')
+    + `<div class="mini-row dt"><span class="lab">DT</span>${pill(all[all.length-1])}</div>`;
+  $('miniCount').textContent=nPicks()+'/12';
+  syncMini();
+}
+let pitchSeen=true, deskSeen=false;
+function syncMini(){ const m=$('mini'); if(!m) return;
+  m.hidden = !(matchMedia('(max-width:900px)').matches && !pitchSeen && deskSeen && !complete()); }
 function renderMoney(){
   $('moneyPanel').hidden = !PURCHASE; if(!PURCHASE) return;
   const sp=spent(), l=left(), n=nPicks();
@@ -275,7 +291,7 @@ function renderSquad(){
   $('squadHint').hidden = sl.scrollHeight <= sl.clientHeight;
 }
 function render(){ try{ renderAll(); } finally { syncFab(); } }
-function renderAll(){ renderLevel(); renderFormations(); renderPitch(); renderMoney(); renderSteps(); renderDice(); renderSquad(); renderCup(); }
+function renderAll(){ renderLevel(); renderFormations(); renderPitch(); renderMoney(); renderSteps(); renderDice(); renderSquad(); renderCup(); renderMini(); }
 
 /* ---- acciones ---- */
 function roll(){
@@ -297,6 +313,7 @@ function place(k,pos,slotId){
   S.season=null; S.open=null; render();
   if(complete()) $('roll').focus();
 }
+const GAME_URL='https://nibra3.github.io/11granate/';
 const smooth = () => matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
 
 /* ---- copa ---- */
@@ -406,7 +423,13 @@ function renderCup(){
   const speeds=`<div class="speeds" role="group" aria-label="Cómo se juegan los partidos"><span class="lab">Partidos</span>${Object.entries(SPEEDS).map(([k,v])=>
     `${k==='slow'?'<span class="sep">Minuto a minuto:</span>':''}<button class="speed${k===SPEED?' on':''}" data-speed="${k}" aria-pressed="${k===SPEED}">${v.n}</button>`).join('')}</div>`;
   const lv = LIVE ? liveFeed() : null;
+  /* Los botones van arriba del fixture para no tener que bajar hasta el final en el celu */
+  const actions=`<div class="sim-actions">${LIVE?`<button class="btn" id="skip">Ver el resultado</button>`
+    :!over?`<button class="btn" id="next">Jugar ${nextRd}</button><button class="btn alt" id="all">Simular hasta el final</button>`
+    :`<button class="btn" id="newgame">Empezar de nuevo</button>`}
+    ${LIVE?'':'<button class="ghost" id="shot">Compartir imagen</button>'}</div>`;
   el.innerHTML=tabs+speeds+`<div class="verdict"><div><h2 class="${champ?'win':''}">${title}</h2><p class="note">${sub}</p></div></div>
+  ${actions}
   <ol class="bracket">${ROUNDS.map((r,i)=>{
     const t=CUP_TEAMS[S.cup.rivals[i]], m=res[i], live=LIVE&&LIVE.i===i;
     const state = live ? 'live' : m ? (m.win?'won':'lost') : (lost||i>res.length ? 'locked' : 'next');
@@ -418,17 +441,14 @@ function renderCup(){
       <span class="pk">${m&&m.pens?`Penales ${m.pens[0]}–${m.pens[1]}`:shown?t.c:''}</span>
       ${live?`<ul id="liveGoals" aria-live="polite">${lv.html}</ul>`
         :m?`<ul>${m.goals.map(g=>`<li>${g.m}' ${last(g.p.n)}</li>`).join('')||'<li>Sin goles tuyos</li>'}</ul>`:''}
-    </li>`;}).join('')}</ol>
-  <div class="sim-actions">${LIVE?`<button class="btn" id="skip">Ver el resultado</button>`
-    :!over?`<button class="btn" id="next">Jugar ${nextRd}</button><button class="btn alt" id="all">Simular hasta el final</button>`
-    :`<button class="btn" id="newgame">Armar otro equipo</button>`}
-    ${LIVE?'':'<button class="ghost" id="shot">Compartir imagen</button>'}</div>`;
+    </li>`;}).join('')}</ol>`;
 }
 function shareText(){
   const lines=slots().map(s=>{const p=S.picks[s.id];return `${s.pos} ${p.n} (${p.year})`});
   const res=S.cup?S.cup.results:[];
   return `11 Granate · ${S.formation}\n${lines.join('\n')}\n`+
-    res.map((m,i)=>`${ROUNDS[i].rd}: Lanús ${m.us}-${m.them} ${CUP_TEAMS[S.cup.rivals[i]].n} ${CUP_TEAMS[S.cup.rivals[i]].y}${m.pens?` (pen ${m.pens[0]}-${m.pens[1]})`:''}`).join('\n');
+    res.map((m,i)=>`${ROUNDS[i].rd}: Lanús ${m.us}-${m.them} ${CUP_TEAMS[S.cup.rivals[i]].n} ${CUP_TEAMS[S.cup.rivals[i]].y}${m.pens?` (pen ${m.pens[0]}-${m.pens[1]})`:''}`).join('\n')+
+    `\n\nArmá el tuyo acá: ${GAME_URL}`;
 }
 function fallback(txt){ const ta=document.createElement('textarea'); ta.value=txt; ta.style.cssText='width:100%;height:160px;margin-top:8px';
   ta.setAttribute('aria-label','Resultado para copiar'); $('cup').appendChild(ta); ta.select(); }
@@ -450,7 +470,9 @@ document.addEventListener('click',e=>{
   else if(t.id==='shareClose') $('share').hidden=true;
   else if(t.dataset.put) place(t.dataset.who,null,t.dataset.put);
   else if(t.dataset.place) place(t.dataset.place,t.dataset.pos);
-  else if(t.dataset.k){ S.open = S.open===t.dataset.k?null:t.dataset.k; renderSquad(); renderPitch(); }
+  else if(t.dataset.k){ S.open = S.open===t.dataset.k?null:t.dataset.k; renderSquad(); renderPitch(); renderMini(); }
+  else if(t.id==='miniGo') document.querySelector('.pitch-card').scrollIntoView({behavior:smooth(),block:'start'});
+  else if(t.id==='copyLink') copyLink(t);
 });
 
 /* ---- imagen para compartir (1080×1350, formato vertical para WhatsApp e Instagram) ---- */
@@ -526,7 +548,7 @@ async function makeShareImage(noCrest){
   head=head.toUpperCase(); fitText(head,880,42,'400',DISP); x.fillStyle=INK; x.fillText(head,104,1196);
   fitText(line,880,26,'500',MONO); x.fillStyle=MUTED; x.fillText(line,104,1250);
 
-  x.font=`500 24px ${BODY}`; x.fillStyle=MUTED; x.textAlign='right'; x.fillText('Armá el tuyo en 11 Granate',1010,1322); x.textAlign='left';
+  x.font=`500 24px ${BODY}`; x.fillStyle=MUTED; x.textAlign='right'; x.fillText('Armá el tuyo en nibra3.github.io/11granate',1010,1322); x.textAlign='left';
   return c;
 }
 async function openShare(){
@@ -540,8 +562,14 @@ async function openShare(){
   $('shareNative').hidden=!canShare;
   $('share').hidden=false; $('shareClose').focus();
 }
+async function copyLink(btn){
+  const txt='Mirá el 11 Granate que armé. Armá el tuyo acá: '+GAME_URL;
+  try{ await navigator.clipboard.writeText(txt); btn.textContent='¡Enlace copiado!'; }
+  catch(e){ btn.textContent=GAME_URL; }
+  setTimeout(()=>btn.textContent='Copiar enlace',2000);
+}
 async function nativeShare(){
-  try{ await navigator.share({files:[new File([shareBlob],'11-granate.png',{type:'image/png'})],title:'11 Granate',text:'Mirá el 11 Granate que armé'}); }catch(e){}
+  try{ await navigator.share({files:[new File([shareBlob],'11-granate.png',{type:'image/png'})],title:'11 Granate',text:'Mirá el 11 Granate que armé. Armá el tuyo acá: '+GAME_URL}); }catch(e){}
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('share').hidden) $('share').hidden=true; });
 $('share').addEventListener('click',e=>{ if(e.target.id==='share') $('share').hidden=true; });
@@ -551,6 +579,10 @@ document.getElementById('home').addEventListener('click',e=>{ e.preventDefault()
 // el botón flotante aparece solo cuando el botón original de tirar no se ve
 if('IntersectionObserver' in window){
   new IntersectionObserver(es=>{ fabWanted=!es[0].isIntersecting; syncFab(); },{threshold:0}).observe(document.getElementById('roll'));
+  // la mini cancha se muestra cuando la cancha grande salió de pantalla y estás en la parte del plantel
+  new IntersectionObserver(es=>{ pitchSeen=es[0].isIntersecting; syncMini(); },{threshold:0,rootMargin:'-80px 0px 0px 0px'}).observe(document.getElementById('pitch'));
+  new IntersectionObserver(es=>{ deskSeen=es[0].isIntersecting; syncMini(); },{threshold:0}).observe(document.querySelector('.desk'));
+  matchMedia('(max-width:900px)').addEventListener?.('change',syncMini);
 }
 function start(data){ S = data && data.picks && data.formation && FORMATIONS[data.formation] ? data : fresh(); S.uses=S.uses||{}; render(); }
 start({});
