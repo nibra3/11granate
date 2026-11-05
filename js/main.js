@@ -207,17 +207,20 @@ function slotEl(s){
 }
 /* mini cancha: misma formación en chiquito, para ver cómo queda el equipo sin bajar hasta la cancha */
 function renderMini(){
-  const rows=FORMATIONS[S.formation], all=slots();
+  const rows=FORMATIONS[S.formation], all=slots(), dt=all[all.length-1];
   const openPl = S.open && S.season ? seasonPlayers(S.season).find(x=>key(x)===S.open) : null;
-  const pill=s=>{ const p=S.picks[s.id], hint=openPl && !p && fit(s.pos,openPl.p)!==null;
-    const cls='mp'+(p?' filled':'')+(hint?' hint':''), txt=p?last(p.n):s.pos;
-    return hint ? `<button type="button" class="${cls}" data-put="${s.id}" data-who="${S.open}" aria-label="Poner a ${openPl.n} de ${s.pos}">${txt}</button>`
-                : `<span class="${cls}" title="${s.pos}">${txt}</span>`; };
-  $('miniRows').innerHTML = rows.map((_,ri)=>`<div class="mini-row">${all.filter(s=>s.row===ri).map(pill).join('')}</div>`).join('')
-    + `<div class="mini-row dt"><span class="lab">DT</span>${pill(all[all.length-1])}</div>`;
+  const spot=s=>{ const p=S.picks[s.id], hint=openPl && !p && fit(s.pos,openPl.p)!==null;
+    const cls='ms'+(p?' filled':'')+(hint?' hint':''), inner=`<i>${s.pos}</i><span>${p?last(p.n):''}</span>`;
+    return hint ? `<button type="button" class="${cls}" data-put="${s.id}" data-who="${S.open}" aria-label="Poner a ${openPl.n} de ${s.pos}">${inner}</button>`
+                : `<div class="${cls}">${inner}</div>`; };
+  $('miniRows').innerHTML = rows.map((_,ri)=>`<div class="mini-row">${all.filter(s=>s.row===ri).map(spot).join('')}</div>`).join('');
+  const d=S.picks[dt.id], dHint=openPl && !d && fit(dt.pos,openPl.p)!==null;
+  $('miniDt').innerHTML = dHint ? `<button type="button" class="mdt hint" data-put="${dt.id}" data-who="${S.open}">Poner de DT</button>`
+                                : `<span class="mdt">DT: <b>${d?last(d.n):'—'}</b></span>`;
   $('miniCount').textContent=nPicks()+'/12';
   syncMini();
 }
+let miniSmall=false;
 let pitchSeen=true, deskSeen=false;
 function syncMini(){ const m=$('mini'); if(!m) return;
   m.hidden = !(matchMedia('(max-width:900px)').matches && !pitchSeen && deskSeen && !complete()); }
@@ -472,6 +475,7 @@ document.addEventListener('click',e=>{
   else if(t.dataset.place) place(t.dataset.place,t.dataset.pos);
   else if(t.dataset.k){ S.open = S.open===t.dataset.k?null:t.dataset.k; renderSquad(); renderPitch(); renderMini(); }
   else if(t.id==='miniGo') document.querySelector('.pitch-card').scrollIntoView({behavior:smooth(),block:'start'});
+  else if(t.id==='miniToggle'){ miniSmall=!miniSmall; $('mini').classList.toggle('small',miniSmall); t.textContent=miniSmall?'+':'–'; t.setAttribute('aria-label',miniSmall?'Agrandar la mini cancha':'Achicar la mini cancha'); }
   else if(t.id==='copyLink') copyLink(t);
 });
 
