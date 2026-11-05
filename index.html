@@ -88,8 +88,15 @@
 
 <!-- mini cancha fija arriba en el celu: aparece mientras mirás el plantel y la cancha grande no se ve -->
 <div class="mini" id="mini" hidden aria-label="Tu equipo (vista rápida)">
-  <button class="mini-head" id="miniGo" type="button"><span>Tu equipo · <b id="miniCount">0/12</b></span><small>Ver cancha ↑</small></button>
-  <div class="mini-rows" id="miniRows"></div>
+  <div class="mini-head">
+    <button class="mini-go" id="miniGo" type="button" aria-label="Ir a la cancha">Tu equipo <b id="miniCount">0/12</b> ↑</button>
+    <button class="mini-x" id="miniToggle" type="button" aria-label="Achicar la mini cancha">–</button>
+  </div>
+  <div class="mini-pitch">
+    <svg viewBox="0 0 68 100" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="66" height="98"/><line x1="1" y1="50" x2="67" y2="50"/><circle cx="34" cy="50" r="9"/><rect x="16" y="1" width="36" height="15"/><rect x="16" y="84" width="36" height="15"/></svg>
+    <div class="mini-rows" id="miniRows"></div>
+  </div>
+  <div class="mini-dt" id="miniDt"></div>
 </div>
 
 <footer class="site-foot">
@@ -105,7 +112,6 @@
       </ul>
     </div>
   </div>
-  <p class="foot-legal">Proyecto de un hincha, sin relación oficial con el Club Atlético Lanús.</p>
 </footer>
 
 <script src="js/data.js"></script>
